@@ -308,11 +308,17 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                             Toast.makeText(LoginActivity.this, "Authentication failed.",
                                     Toast.LENGTH_SHORT).show();
                             user = null;
-                            showProgress(false);
+                            invalidUser();
                         }
 
                     }
                 });
+    }
+
+    private void invalidUser(){
+        showProgress(false);
+        mPasswordView.setError(getString(R.string.error_invalid_user));
+        mEmailView.setError(getString(R.string.error_invalid_user));
     }
 
     private void login(FirebaseUser user){
