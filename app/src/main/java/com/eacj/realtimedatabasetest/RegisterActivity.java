@@ -12,6 +12,7 @@ import android.provider.ContactsContract;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -52,7 +53,7 @@ public class RegisterActivity extends AppCompatActivity implements LoaderManager
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
                 if (id == EditorInfo.IME_ACTION_DONE || id == EditorInfo.IME_NULL) {
-                    register();
+                    attemptRegister();
                     return true;
                 }
                 return false;
@@ -63,14 +64,87 @@ public class RegisterActivity extends AppCompatActivity implements LoaderManager
         mRegisterButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                register();
+                attemptRegister();
             }
         });
 
     }
 
-    private void register(){
+    private void attemptRegister(){
+
+        mEmailView.setError(null);
+        mPasswordView.setError(null);
+        mPasswordConfirmView.setError(null);
+
+        String email = mEmailView.getText().toString();
+        String password = mPasswordView.getText().toString();
+        String confirmPassword = mPasswordConfirmView.getText().toString();
+
+        System.out.println(email);
+        System.out.println(password);
+        System.out.println(confirmPassword);
+
+        boolean cancel = false;
+        View focusView = null;
+
+        // Check for a valid password, if the user entered one.
+        if (TextUtils.isEmpty(confirmPassword)) {
+            mPasswordConfirmView.setError(getString(R.string.error_field_required));
+            focusView = mPasswordConfirmView;
+            cancel = true;
+        }else if(!isPasswordValid(confirmPassword)){
+            mPasswordConfirmView.setError(getString(R.string.error_invalid_password));
+            focusView = mPasswordConfirmView;
+            cancel = true;
+        }else if(!password.equals(confirmPassword)){
+            mPasswordConfirmView.setError(getString(R.string.error_different_password));
+            focusView = mPasswordConfirmView;
+            cancel = true;
+        }
+
+        if (TextUtils.isEmpty(password)) {
+            mPasswordView.setError(getString(R.string.error_field_required));
+            focusView = mPasswordView;
+            cancel = true;
+        }else if(!isPasswordValid(password)){
+            mPasswordView.setError(getString(R.string.error_invalid_password));
+            focusView = mPasswordView;
+            cancel = true;
+        }
+
+        // Check for a valid email address.
+        if (TextUtils.isEmpty(email)) {
+            mEmailView.setError(getString(R.string.error_field_required));
+            focusView = mEmailView;
+            cancel = true;
+        } else if (!isEmailValid(email)) {
+            mEmailView.setError(getString(R.string.error_invalid_email));
+            focusView = mEmailView;
+            cancel = true;
+        }
+
+        if (cancel) {
+            // There was an error; don't attempt register and focus the first
+            // form field with an error.
+            focusView.requestFocus();
+        } else {
+            register(email,password);
+        }
+
+    }
+
+    private void register(String email, String password){
         onBackPressed();
+    }
+
+    private boolean isEmailValid(String email) {
+        //TODO: Replace this with your own logic
+        return email.contains("@");
+    }
+
+    private boolean isPasswordValid(String password) {
+        //TODO: Replace this with your own logic
+        return password.length() > 4;
     }
 
     // Email autocomplete setup
