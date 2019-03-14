@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.ContactsContract;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -21,6 +22,13 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,10 +42,14 @@ public class RegisterActivity extends AppCompatActivity implements LoaderManager
      */
     private static final int REQUEST_READ_CONTACTS = 0;
 
+    //Firebase references.
+    private FirebaseAuth mAuth;
+
     // UI references.
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
     private EditText mPasswordConfirmView;
+    private Button mRegisterButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,13 +72,15 @@ public class RegisterActivity extends AppCompatActivity implements LoaderManager
             }
         });
 
-        Button mRegisterButton = (Button) findViewById(R.id.email_register_button);
+        mRegisterButton = (Button) findViewById(R.id.email_register_button);
         mRegisterButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 attemptRegister();
             }
         });
+
+        mAuth = FirebaseAuth.getInstance();
 
     }
 
@@ -79,10 +93,6 @@ public class RegisterActivity extends AppCompatActivity implements LoaderManager
         String email = mEmailView.getText().toString();
         String password = mPasswordView.getText().toString();
         String confirmPassword = mPasswordConfirmView.getText().toString();
-
-        System.out.println(email);
-        System.out.println(password);
-        System.out.println(confirmPassword);
 
         boolean cancel = false;
         View focusView = null;
@@ -128,13 +138,32 @@ public class RegisterActivity extends AppCompatActivity implements LoaderManager
             // form field with an error.
             focusView.requestFocus();
         } else {
+            mRegisterButton.setEnabled(false);
             register(email,password);
         }
 
     }
 
     private void register(String email, String password){
-        onBackPressed();
+        mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Toast.makeText(RegisterActivity.this, "Deu certo",
+                                    Toast.LENGTH_SHORT).show();
+                            //usar o metodo a baixo para fazer com q a tela volte para a tela de login
+                            //onBackPressed();
+                        } else {
+
+                            Toast.makeText(RegisterActivity.this, "Erro",
+                                    Toast.LENGTH_SHORT).show();
+
+                        }
+                        mRegisterButton.setEnabled(true);
+                    }
+                });
     }
 
     private boolean isEmailValid(String email) {
