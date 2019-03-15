@@ -30,6 +30,12 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.SignInButton;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -50,10 +56,13 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * Id to identity READ_CONTACTS permission request.
      */
     private static final int REQUEST_READ_CONTACTS = 0;
+    private static final int RC_SIGN_IN = 9001;
 
     //Firebase references.
     private FirebaseAuth mAuth;
     private FirebaseUser user;
+
+    private GoogleSignInClient mGoogleSignInClient;
 
     // UI references.
     private AutoCompleteTextView mEmailView;
@@ -100,10 +109,25 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             }
         });
 
+        SignInButton mGoogleSignInButton = findViewById(R.id.google_sign_in_button);
+        mGoogleSignInButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                googleSignIn();
+            }
+        });
+
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
 
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+
         mAuth = FirebaseAuth.getInstance();
+
     }
 
     private void populateAutoComplete() {
@@ -149,6 +173,11 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         }
     }
 
+
+    private void googleSignIn(){
+        Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+        startActivityForResult(signInIntent, RC_SIGN_IN);
+    }
 
     /**
      * Attempts to sign in or register the account specified by the login form.
@@ -337,6 +366,30 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         finish();
     }
 
+    private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
+        try {
+            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
+
+            // Signed in successfully, show authenticated UI.
+        } catch (ApiException e) {
+            // The ApiException status code indicates the detailed failure reason.
+            // Please refer to the GoogleSignInStatusCodes class reference for more information.
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Result returned from launching the Intent from GoogleSignInClient.getSignInIntent(...);
+        if (requestCode == RC_SIGN_IN) {
+            // The Task returned from this call is always completed, no need to attach
+            // a listener.
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            handleSignInResult(task);
+        }
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -350,5 +403,14 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         }
 
     }
+
+    /*
+
+        https://firebase.google.com/docs/auth/android/google-signin?utm_source=studio
+        https://github.com/firebase/quickstart-android/blob/ab0315ab4c7a630ca9c0b8d2a28cdf9c997a3fc6/auth/app/src/main/java/com/google/firebase/quickstart/auth/java/GoogleSignInActivity.java
+        https://developers.google.com/identity/sign-in/android/sign-in
+
+    */
+
 }
 
